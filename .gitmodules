@@ -1,0 +1,3 @@
+[submodule "sources/submodules/reset-css"]
+	path = sources/submodules/reset-css
+	url = https://github.com/Zamralik/reset-css.git

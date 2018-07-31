@@ -1,0 +1,29 @@
+smashing-slideshow {
+  position: relative;
+  overflow: hidden;
+}
+
+smashing-rail {
+  position: absolute;
+  height: 100%;
+  top: 0;
+  left: 0;
+  max-width: initial;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+smashing-slide {
+  height: 100%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+/*# sourceMappingURL=main.css.map */

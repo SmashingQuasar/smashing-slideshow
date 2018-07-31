@@ -1,0 +1,19 @@
+main
+{
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+smashing-slideshow
+{
+    height: 700px;
+    width: 700px;
+    border: 1px solid cyan;
+}
+
+smashing-slide
+{
+    border: 1px dashed purple;
+}
