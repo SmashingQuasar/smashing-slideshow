@@ -1,21 +1,131 @@
 "use strict";
 
+
+
 function isNumeric(n: any): boolean
 {
     return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+class SmashingArrow
+{
+    private node: HTMLButtonElement;
+    private orientation: string;
+    private slideshow: SmashingSlideshow;
+    
+    constructor(orientation: string, slideshow: SmashingSlideshow)
+    {
+        if (["left", "right"].indexOf(orientation) === -1)
+        {
+            throw new SyntaxError(`Arrow orientation must be either "left" or "right".`);
+        }
+
+        this.slideshow = slideshow;
+
+        this.node = document.createElement("button");
+        this.orientation = orientation;
+        this.node.classList.add("smashing-arrow", this.orientation);
+
+        this.slideshow.getNode().appendChild(this.node);
+
+        this.node.addEventListener(
+            "click",
+            (): void =>
+            {
+                console.log(this.slideshow);
+                if (this.orientation === "left")
+                {
+                    this.slideshow.goTo(this.slideshow.getActiveSlide().getIndex() - 1);
+                }
+                else if (this.orientation === "right")
+                {
+                    this.slideshow.goTo(this.slideshow.getActiveSlide().getIndex() + 1);
+                }
+            }  
+        );
+    }
 }
 
 class SmashingSlide
 {
     private node: HTMLElement;
     private content: HTMLElement;
+    private index: number = 0;
+    private dragged: boolean = false;
+    private slideshow: SmashingSlideshow;
+    private dragX: number = 0;
 
-    constructor(content: HTMLElement)
+    constructor(content: HTMLElement, slideshow: SmashingSlideshow)
     {
         this.node = document.createElement("smashing-slide");
         this.content = content;
         this.node.appendChild(content);
+
+        this.slideshow = slideshow;
+
+        this.node.setAttribute("draggable", "true");
+
+        this.node.addEventListener("mousedown", this.dragStart.bind(this));
+        this.node.addEventListener("mousemove", this.drag.bind(this));
+        this.node.addEventListener("mouseup", this.dragEnd.bind(this));
+        this.node.addEventListener("mouseleave", this.dragEnd.bind(this));
     }
+
+    private dragStart(event: MouseEvent): void
+    {
+        this.dragged = true;
+
+        this.slideshow.getRail().setSlideTime(`0s, 0.5s`);
+        this.dragX = event.clientX;
+    }
+
+    private drag(event: MouseEvent): void
+    {
+
+        if (this.dragged)
+        {
+            let calc: number = -((this.dragX - event.clientX) + this.index * parseFloat(`${this.getWidth()}`));
+            
+            this.slideshow.getRail().getNode().style.left = `${calc}px`;
+        }
+    }
+
+    private dragEnd(event: MouseEvent): void
+    {
+
+        if (this.dragged)
+        {
+            this.dragged = false;
+        
+            let left: number = Math.abs(parseFloat(`${this.slideshow.getRail().getNode().style.left}`)) - (this.index * parseFloat(`${this.getWidth()}`));
+    
+            let forward: number = event.clientX - this.dragX;
+
+            let width = parseFloat(`${this.getWidth()}`);
+    
+            let delta = (width / 4) - Math.abs(left);
+    
+            if (delta < 0)
+            {
+                if (forward < 0)
+                {
+                    this.slideshow.goTo(this.index + 1);
+                }
+                else
+                {
+                    this.slideshow.goTo(this.index - 1);
+                }
+            }
+            else
+            {
+                this.slideshow.goTo(this.index);
+            }
+    
+            this.slideshow.getRail().setSlideTime(`0.5s, 0.5s`);
+    
+        }
+    }
+
 
     /**
      * getNode
@@ -49,6 +159,21 @@ class SmashingSlide
         return this.content;    
     }
 
+    /**
+     * getIndex
+     */
+    public getIndex(): number
+    {
+        return this.index;
+    }
+
+    /**
+     * setIndex
+     */
+    public setIndex(index: number): void
+    {
+        this.index = index;
+    }
 
 }
 
@@ -157,16 +282,41 @@ class SmashingRail
 
 }
 
+class SmashingViewport
+{
+    private node: HTMLElement;
+
+    constructor()
+    {
+        this.node = document.createElement("smashing-viewport");
+    }
+
+    /**
+     * getNode
+     */
+    public getNode(): HTMLElement
+    {
+        return this.node;        
+    }
+
+}
+
 class SmashingSlideshow
 {
 
+    private node: HTMLElement;
+    private viewport: SmashingViewport;
     private width: number;
     private rail: SmashingRail;
     private elements: Array<Element>;
+    private arrows: Array<SmashingArrow> = [];
+    private activeSlide: SmashingSlide;
 
     constructor(root: HTMLElement)
     {
         /* Initializing root */
+
+        this.node = root;
 
         let rect: ClientRect = root.getBoundingClientRect();
 
@@ -174,9 +324,13 @@ class SmashingSlideshow
 
         /* Fetching elements */
 
-        let elements: HTMLCollection = root.children;
+        let elements: HTMLCollection = this.node.children;
 
         this.elements = Array.from(elements);
+
+        /* Initializing viewport */
+
+        this.viewport = new SmashingViewport();
 
         /* Initializing rail */
 
@@ -185,27 +339,56 @@ class SmashingSlideshow
 
         /* Initializing slides */
 
-        this.elements.forEach(
-            (element: Element) =>
+        for (let i = 0; i < this.elements.length; ++i)
+        {
+            let element: Element = this.elements[i]
+
+            if (element instanceof HTMLElement) // Strict type check.
             {
-                if (element instanceof HTMLElement) // Strict type check.
-                {
-                    let slide: SmashingSlide = new SmashingSlide(element);
-    
-                    slide.setWidth(`${this.width}px`);
-    
-                    this.rail.add(slide);
-                    
-                }
-                else
-                {
-                    throw new TypeError("Trying to add a non-HTMLElement to SmashingSlideshow.");
-                }
+                let slide: SmashingSlide = new SmashingSlide(element, this);
+
+                slide.setWidth(`${this.width}px`);
+
+                slide.setIndex(i);
+
+                this.rail.add(slide);
+                
             }
-        );
+            else
+            {
+                throw new TypeError("Trying to add a non-HTMLElement to SmashingSlideshow.");
+            }
+        }
 
-        root.appendChild(this.rail.getNode());
+        this.viewport.getNode().appendChild(this.rail.getNode());
 
+        this.node.appendChild(this.viewport.getNode());
+
+        /* Initializing arrows */
+
+        const left_arrow: SmashingArrow = new SmashingArrow("left", this);
+        const right_arrow: SmashingArrow = new SmashingArrow("right", this);
+        
+        this.arrows.push(left_arrow, right_arrow);
+
+        this.activeSlide = this.getSlides()[0];
+
+    }
+
+    /**
+     * getNode
+     */
+    public getNode(): HTMLElement
+    {
+        return this.node;
+    }
+
+    /**
+     * getActiveSlide
+     */
+    public getActiveSlide(): SmashingSlide
+    {
+        return this.activeSlide;    
     }
 
     /**
@@ -238,6 +421,11 @@ class SmashingSlideshow
     public goTo(index: number): void
     {
 
+        if (index < 0)
+        {
+            index = 0;
+        }
+
         if (index > this.elements.length)
         {
             index = index - this.elements.length;
@@ -246,7 +434,8 @@ class SmashingSlideshow
         }
         else
         {
-            this.rail.getNode().style.left = `-${(index - 1) * this.width}px`;    
+            this.rail.getNode().style.left = `-${(index) * this.width}px`;  
+            this.activeSlide = this.getSlides()[index];  
         }
     }
 

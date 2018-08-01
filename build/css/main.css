@@ -1,9 +1,14 @@
 smashing-slideshow {
   position: relative;
-  overflow: hidden;
 }
 
-smashing-rail {
+smashing-slideshow smashing-viewport {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+smashing-slideshow smashing-rail {
   position: absolute;
   height: 100%;
   top: 0;
@@ -14,13 +19,13 @@ smashing-rail {
   display: flex;
   -webkit-transition-property: left, opacity;
   transition-property: left, opacity;
-  -webkit-transition-duration: 0.5s, 0.5s;
-          transition-duration: 0.5s, 0.5s;
+  -webkit-transition-duration: 0.5s, 0.25s;
+          transition-duration: 0.5s, 0.25s;
   -webkit-transition-timing-function: ease-in;
           transition-timing-function: ease-in;
 }
 
-smashing-slide {
+smashing-slideshow smashing-slide {
   height: 100%;
   display: -webkit-box;
   display: -ms-flexbox;
@@ -31,5 +36,27 @@ smashing-slide {
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
+}
+
+smashing-slideshow button.smashing-arrow {
+  position: absolute;
+  top: 50%;
+  width: 50px;
+  height: 50px;
+  border-top: 1px solid black;
+}
+
+smashing-slideshow button.smashing-arrow.left {
+  left: -75px;
+  border-left: 1px solid black;
+  -webkit-transform: rotate(-45deg);
+          transform: rotate(-45deg);
+}
+
+smashing-slideshow button.smashing-arrow.right {
+  right: -75px;
+  border-right: 1px solid black;
+  -webkit-transform: rotate(45deg);
+          transform: rotate(45deg);
 }
 /*# sourceMappingURL=main.css.map */
