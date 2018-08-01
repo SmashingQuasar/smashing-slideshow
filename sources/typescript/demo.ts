@@ -1,5 +1,7 @@
 "use strict";
 
+let slideshow: SmashingSlideshow;
+
 window.addEventListener(
     "load",
     (): void =>
@@ -8,7 +10,7 @@ window.addEventListener(
 
         if (root)
         {
-            new SmashingSlideshow(root);
+            slideshow = new SmashingSlideshow(root);
         }
         else
         {
@@ -17,3 +19,4 @@ window.addEventListener(
 
     }
 );
+

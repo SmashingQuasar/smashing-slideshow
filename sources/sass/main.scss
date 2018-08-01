@@ -12,6 +12,9 @@ smashing-rail
     left: 0;
     max-width: initial;
     display: flex;
+    transition-property: left, opacity;
+    transition-duration: 0.5s, 0.25s;
+    transition-timing-function: ease-in;
 }
 
 smashing-slide

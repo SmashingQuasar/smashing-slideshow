@@ -12,6 +12,12 @@ smashing-rail {
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
+  -webkit-transition-property: left, opacity;
+  transition-property: left, opacity;
+  -webkit-transition-duration: 0.5s, 0.5s;
+          transition-duration: 0.5s, 0.5s;
+  -webkit-transition-timing-function: ease-in;
+          transition-timing-function: ease-in;
 }
 
 smashing-slide {
