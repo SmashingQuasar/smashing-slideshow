@@ -17,12 +17,10 @@ smashing-slideshow smashing-rail {
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
+  -webkit-transition-duration: 0.5s, 0.5s;
+          transition-duration: 0.5s, 0.5s;
   -webkit-transition-property: left, opacity;
   transition-property: left, opacity;
-  -webkit-transition-duration: 0.5s, 0.25s;
-          transition-duration: 0.5s, 0.25s;
-  -webkit-transition-timing-function: ease-in;
-          transition-timing-function: ease-in;
 }
 
 smashing-slideshow smashing-slide {
@@ -58,5 +56,34 @@ smashing-slideshow button.smashing-arrow.right {
   border-right: 1px solid black;
   -webkit-transform: rotate(45deg);
           transform: rotate(45deg);
+}
+
+smashing-slideshow nav {
+  position: absolute;
+  width: 100%;
+  bottom: -50px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+}
+
+smashing-slideshow nav button {
+  width: 25px;
+  height: 25px;
+  margin: 5px;
+  border-radius: 25px;
+  background-color: blue;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
 }
 /*# sourceMappingURL=main.css.map */

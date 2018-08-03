@@ -1,7 +1,51 @@
 "use strict";
+function makeUndraggable(node) {
+    Array.prototype.forEach.call(node.children, function (child) {
+        child.setAttribute("draggable", "false");
+        if (child.children) {
+            makeUndraggable(child);
+        }
+    });
+}
 function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
+var SmashingBulletRail = (function () {
+    function SmashingBulletRail() {
+        this.bullets = [];
+        this.node = document.createElement("nav");
+    }
+    SmashingBulletRail.prototype.getNode = function () {
+        return this.node;
+    };
+    SmashingBulletRail.prototype.add = function (bullet) {
+        this.bullets.push(bullet);
+        this.node.appendChild(bullet.getNode());
+    };
+    return SmashingBulletRail;
+}());
+var SmashingBullet = (function () {
+    function SmashingBullet(index, slideshow) {
+        var _this = this;
+        this.transition = "slide";
+        this.node = document.createElement("button");
+        this.index = index;
+        this.node.appendChild(document.createTextNode("" + (this.index + 1)));
+        this.slideshow = slideshow;
+        this.node.addEventListener("click", function () {
+            if (_this.transition === "slide") {
+                _this.slideshow.goTo(_this.index);
+            }
+            else {
+                _this.slideshow.fadeTo(_this.index);
+            }
+        });
+    }
+    SmashingBullet.prototype.getNode = function () {
+        return this.node;
+    };
+    return SmashingBullet;
+}());
 var SmashingArrow = (function () {
     function SmashingArrow(orientation, slideshow) {
         var _this = this;
@@ -34,22 +78,23 @@ var SmashingSlide = (function () {
         this.content = content;
         this.node.appendChild(content);
         this.slideshow = slideshow;
-        this.node.setAttribute("draggable", "true");
-        this.node.addEventListener("mousedown", this.dragStart.bind(this));
-        this.node.addEventListener("mousemove", this.drag.bind(this));
-        this.node.addEventListener("mouseup", this.dragEnd.bind(this));
-        this.node.addEventListener("mouseleave", this.dragEnd.bind(this));
+        this.node.addEventListener("mousedown", this.dragStart.bind(this), true);
+        this.node.addEventListener("mousemove", this.drag.bind(this), true);
+        this.node.addEventListener("mouseup", this.dragEnd.bind(this), true);
+        this.node.addEventListener("mouseleave", this.dragEnd.bind(this), true);
     }
     SmashingSlide.prototype.dragStart = function (event) {
         this.dragged = true;
         this.slideshow.getRail().setSlideTime("0s, 0.5s");
         this.dragX = event.clientX;
+        event.preventDefault();
     };
     SmashingSlide.prototype.drag = function (event) {
         if (this.dragged) {
             var calc = -((this.dragX - event.clientX) + this.index * parseFloat("" + this.getWidth()));
             this.slideshow.getRail().getNode().style.left = calc + "px";
         }
+        event.preventDefault();
     };
     SmashingSlide.prototype.dragEnd = function (event) {
         if (this.dragged) {
@@ -60,10 +105,20 @@ var SmashingSlide = (function () {
             var delta = (width / 4) - Math.abs(left);
             if (delta < 0) {
                 if (forward < 0) {
-                    this.slideshow.goTo(this.index + 1);
+                    if (this.index === (this.slideshow.getElements().length - 1)) {
+                        this.slideshow.goTo(this.index);
+                    }
+                    else {
+                        this.slideshow.goTo(this.index + 1);
+                    }
                 }
                 else {
-                    this.slideshow.goTo(this.index - 1);
+                    if (this.index === 0) {
+                        this.slideshow.goTo(this.index);
+                    }
+                    else {
+                        this.slideshow.goTo(this.index - 1);
+                    }
                 }
             }
             else {
@@ -71,6 +126,7 @@ var SmashingSlide = (function () {
             }
             this.slideshow.getRail().setSlideTime("0.5s, 0.5s");
         }
+        event.preventDefault();
     };
     SmashingSlide.prototype.getNode = function () {
         return this.node;
@@ -161,6 +217,8 @@ var SmashingSlideshow = (function () {
         this.viewport = new SmashingViewport();
         this.rail = new SmashingRail();
         this.rail.setWidth(this.width * this.elements.length + "px");
+        this.bulletRail = new SmashingBulletRail();
+        this.node.appendChild(this.bulletRail.getNode());
         for (var i = 0; i < this.elements.length; ++i) {
             var element = this.elements[i];
             if (element instanceof HTMLElement) {
@@ -168,6 +226,7 @@ var SmashingSlideshow = (function () {
                 slide.setWidth(this.width + "px");
                 slide.setIndex(i);
                 this.rail.add(slide);
+                this.bulletRail.add(new SmashingBullet(i, this));
             }
             else {
                 throw new TypeError("Trying to add a non-HTMLElement to SmashingSlideshow.");
@@ -182,6 +241,9 @@ var SmashingSlideshow = (function () {
     }
     SmashingSlideshow.prototype.getNode = function () {
         return this.node;
+    };
+    SmashingSlideshow.prototype.getElements = function () {
+        return this.elements;
     };
     SmashingSlideshow.prototype.getActiveSlide = function () {
         return this.activeSlide;
@@ -199,7 +261,7 @@ var SmashingSlideshow = (function () {
         if (index < 0) {
             index = 0;
         }
-        if (index > this.elements.length) {
+        if (index > (this.elements.length - 1)) {
             index = index - this.elements.length;
             this.goTo(index);
         }

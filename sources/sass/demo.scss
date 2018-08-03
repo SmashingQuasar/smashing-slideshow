@@ -6,14 +6,27 @@ main
     justify-content: center;
     align-items: center;
 }
+
 smashing-slideshow
 {
     height: 700px;
     width: 700px;
     border: 1px solid cyan;
-}
 
-smashing-slide
-{
-    border: 1px dashed purple;
+    smashing-slide
+    {
+        border: 1px dashed purple;
+    }
+
+    nav
+    {
+        height: 50px;
+
+        button
+        {
+            color: white;
+            font-weight: bold;
+        }
+    }
+
 }

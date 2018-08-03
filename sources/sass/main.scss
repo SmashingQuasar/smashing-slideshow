@@ -17,6 +17,8 @@ smashing-slideshow
         left: 0;
         max-width: initial;
         display: flex;
+        transition-duration: 0.5s, 0.5s;
+        transition-property: left, opacity;
     }
     
     smashing-slide
@@ -49,5 +51,26 @@ smashing-slideshow
         transform: rotate(45deg);
     }
 
-}
+    nav
+    {
+        position: absolute;
+        width: 100%;
+        bottom: -50px;
+        display: flex;
+        justify-content: center;
 
+        button
+        {
+            width: 25px;
+            height: 25px;
+            margin: 5px;
+            border-radius: 25px;
+            background-color: blue;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+    }
+
+}

@@ -1,10 +1,92 @@
 "use strict";
 
+function makeUndraggable(node: HTMLElement)
+{
+    Array.prototype.forEach.call(
+        node.children,
+        (child: HTMLElement) =>
+        {
+            child.setAttribute("draggable", "false");
 
+            if (child.children)
+            {
+                makeUndraggable(child);
+            }
+        }
+    );
+}
 
 function isNumeric(n: any): boolean
 {
     return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+class SmashingBulletRail
+{
+    private node: HTMLElement;
+    private bullets: Array<SmashingBullet> = [];
+
+    constructor()
+    {
+        this.node = document.createElement("nav");
+    }
+
+    /**
+     * getNode
+     */
+    public getNode(): HTMLElement
+    {
+        return this.node;
+    }
+
+    /**
+     * add
+     */
+    public add(bullet: SmashingBullet): void
+    {
+        this.bullets.push(bullet);
+        this.node.appendChild(bullet.getNode());
+    }
+
+}
+
+class SmashingBullet
+{
+    private node: HTMLButtonElement;
+    private index: number;
+    private slideshow: SmashingSlideshow;
+    private transition: string = "slide";
+
+    constructor(index: number, slideshow: SmashingSlideshow)
+    {
+        this.node = document.createElement("button");
+        this.index = index;
+        this.node.appendChild(document.createTextNode(`${this.index + 1}`));
+        this.slideshow = slideshow;
+
+        this.node.addEventListener(
+            "click",
+            () =>
+            {
+                if (this.transition === "slide")
+                {
+                    this.slideshow.goTo(this.index);
+                }
+                else
+                {
+                    this.slideshow.fadeTo(this.index);
+                }
+            }
+        );
+    }
+
+    /**
+     * getNode
+     */
+    public getNode(): HTMLButtonElement
+    {
+        return this.node;
+    }
 }
 
 class SmashingArrow
@@ -63,12 +145,11 @@ class SmashingSlide
 
         this.slideshow = slideshow;
 
-        this.node.setAttribute("draggable", "true");
+        this.node.addEventListener("mousedown", this.dragStart.bind(this), true);
+        this.node.addEventListener("mousemove", this.drag.bind(this), true);
+        this.node.addEventListener("mouseup", this.dragEnd.bind(this), true);
+        this.node.addEventListener("mouseleave", this.dragEnd.bind(this), true);
 
-        this.node.addEventListener("mousedown", this.dragStart.bind(this));
-        this.node.addEventListener("mousemove", this.drag.bind(this));
-        this.node.addEventListener("mouseup", this.dragEnd.bind(this));
-        this.node.addEventListener("mouseleave", this.dragEnd.bind(this));
     }
 
     private dragStart(event: MouseEvent): void
@@ -77,6 +158,7 @@ class SmashingSlide
 
         this.slideshow.getRail().setSlideTime(`0s, 0.5s`);
         this.dragX = event.clientX;
+        event.preventDefault();
     }
 
     private drag(event: MouseEvent): void
@@ -88,6 +170,7 @@ class SmashingSlide
             
             this.slideshow.getRail().getNode().style.left = `${calc}px`;
         }
+        event.preventDefault();
     }
 
     private dragEnd(event: MouseEvent): void
@@ -105,15 +188,31 @@ class SmashingSlide
     
             let delta = (width / 4) - Math.abs(left);
     
+
+
             if (delta < 0)
             {
                 if (forward < 0)
                 {
-                    this.slideshow.goTo(this.index + 1);
+                    if (this.index === (this.slideshow.getElements().length - 1))
+                    {
+                        this.slideshow.goTo(this.index);
+                    }
+                    else
+                    {
+                        this.slideshow.goTo(this.index + 1);
+                    }
                 }
                 else
                 {
-                    this.slideshow.goTo(this.index - 1);
+                    if (this.index === 0)
+                    {
+                        this.slideshow.goTo(this.index);
+                    }
+                    else
+                    {
+                        this.slideshow.goTo(this.index - 1);
+                    }
                 }
             }
             else
@@ -124,6 +223,7 @@ class SmashingSlide
             this.slideshow.getRail().setSlideTime(`0.5s, 0.5s`);
     
         }
+        event.preventDefault();
     }
 
 
@@ -311,6 +411,7 @@ class SmashingSlideshow
     private elements: Array<Element>;
     private arrows: Array<SmashingArrow> = [];
     private activeSlide: SmashingSlide;
+    private bulletRail: SmashingBulletRail;
 
     constructor(root: HTMLElement)
     {
@@ -326,6 +427,8 @@ class SmashingSlideshow
 
         let elements: HTMLCollection = this.node.children;
 
+        // makeUndraggable(root);
+
         this.elements = Array.from(elements);
 
         /* Initializing viewport */
@@ -336,6 +439,11 @@ class SmashingSlideshow
 
         this.rail = new SmashingRail();
         this.rail.setWidth(`${this.width * this.elements.length}px`);
+
+        /* Initializing bullets */
+
+        this.bulletRail = new SmashingBulletRail();
+        this.node.appendChild(this.bulletRail.getNode());
 
         /* Initializing slides */
 
@@ -352,6 +460,7 @@ class SmashingSlideshow
                 slide.setIndex(i);
 
                 this.rail.add(slide);
+                this.bulletRail.add(new SmashingBullet(i, this));
                 
             }
             else
@@ -373,6 +482,7 @@ class SmashingSlideshow
 
         this.activeSlide = this.getSlides()[0];
 
+
     }
 
     /**
@@ -381,6 +491,14 @@ class SmashingSlideshow
     public getNode(): HTMLElement
     {
         return this.node;
+    }
+
+    /**
+     * getElements
+     */
+    public getElements(): Array<Element>
+    {
+        return this.elements;
     }
 
     /**
@@ -426,7 +544,7 @@ class SmashingSlideshow
             index = 0;
         }
 
-        if (index > this.elements.length)
+        if (index > (this.elements.length - 1))
         {
             index = index - this.elements.length;
 

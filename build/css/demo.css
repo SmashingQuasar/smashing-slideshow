@@ -18,7 +18,16 @@ smashing-slideshow {
   border: 1px solid cyan;
 }
 
-smashing-slide {
+smashing-slideshow smashing-slide {
   border: 1px dashed purple;
+}
+
+smashing-slideshow nav {
+  height: 50px;
+}
+
+smashing-slideshow nav button {
+  color: white;
+  font-weight: bold;
 }
 /*# sourceMappingURL=demo.css.map */
