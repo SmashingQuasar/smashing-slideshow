@@ -1,28 +1,25 @@
 "use strict";
-function makeUndraggable(node) {
-    Array.prototype.forEach.call(node.children, function (child) {
-        child.setAttribute("draggable", "false");
-        if (child.children) {
-            makeUndraggable(child);
-        }
-    });
-}
 function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
-var SmashingBulletRail = (function () {
-    function SmashingBulletRail() {
+var SmashingBulletsRail = (function () {
+    function SmashingBulletsRail(node) {
         this.bullets = [];
-        this.node = document.createElement("nav");
+        if (node === undefined) {
+            this.node = document.createElement("nav");
+        }
+        else {
+            this.node = node;
+        }
     }
-    SmashingBulletRail.prototype.getNode = function () {
+    SmashingBulletsRail.prototype.getNode = function () {
         return this.node;
     };
-    SmashingBulletRail.prototype.add = function (bullet) {
+    SmashingBulletsRail.prototype.add = function (bullet) {
         this.bullets.push(bullet);
         this.node.appendChild(bullet.getNode());
     };
-    return SmashingBulletRail;
+    return SmashingBulletsRail;
 }());
 var SmashingBullet = (function () {
     function SmashingBullet(index, slideshow) {
@@ -47,18 +44,22 @@ var SmashingBullet = (function () {
     return SmashingBullet;
 }());
 var SmashingArrow = (function () {
-    function SmashingArrow(orientation, slideshow) {
+    function SmashingArrow(configuration) {
         var _this = this;
-        if (["left", "right"].indexOf(orientation) === -1) {
+        if (["left", "right"].indexOf(configuration.orientation) === -1) {
             throw new SyntaxError("Arrow orientation must be either \"left\" or \"right\".");
         }
-        this.slideshow = slideshow;
-        this.node = document.createElement("button");
-        this.orientation = orientation;
+        this.slideshow = configuration.slideshow;
+        if (configuration.node === undefined || configuration.node === null) {
+            this.node = document.createElement("button");
+            this.slideshow.getNode().appendChild(this.node);
+        }
+        else {
+            this.node = configuration.node;
+        }
+        this.orientation = configuration.orientation;
         this.node.classList.add("smashing-arrow", this.orientation);
-        this.slideshow.getNode().appendChild(this.node);
         this.node.addEventListener("click", function () {
-            console.log(_this.slideshow);
             if (_this.orientation === "left") {
                 _this.slideshow.goTo(_this.slideshow.getActiveSlide().getIndex() - 1);
             }
@@ -198,8 +199,13 @@ var SmashingRail = (function () {
     return SmashingRail;
 }());
 var SmashingViewport = (function () {
-    function SmashingViewport() {
-        this.node = document.createElement("smashing-viewport");
+    function SmashingViewport(node) {
+        if (node === undefined) {
+            this.node = document.createElement("smashing-viewport");
+        }
+        else {
+            this.node = node;
+        }
     }
     SmashingViewport.prototype.getNode = function () {
         return this.node;
@@ -207,18 +213,18 @@ var SmashingViewport = (function () {
     return SmashingViewport;
 }());
 var SmashingSlideshow = (function () {
-    function SmashingSlideshow(root) {
-        this.arrows = [];
-        this.node = root;
-        var rect = root.getBoundingClientRect();
-        this.width = rect.width;
-        var elements = this.node.children;
-        this.elements = Array.from(elements);
-        this.viewport = new SmashingViewport();
-        this.rail = new SmashingRail();
-        this.rail.setWidth(this.width * this.elements.length + "px");
-        this.bulletRail = new SmashingBulletRail();
-        this.node.appendChild(this.bulletRail.getNode());
+    function SmashingSlideshow(user_configuration) {
+        var configuration = this.computeConfiguration(user_configuration);
+        console.group("constructor");
+        console.log(user_configuration);
+        console.log(configuration);
+        this.node = configuration.wrapper;
+        this.viewport = configuration.viewport;
+        this.width = configuration.width;
+        this.rail = configuration.rail;
+        this.elements = configuration.elements;
+        this.showBullets = configuration.showBullets;
+        this.bulletsRail = configuration.bulletsRail;
         for (var i = 0; i < this.elements.length; ++i) {
             var element = this.elements[i];
             if (element instanceof HTMLElement) {
@@ -226,17 +232,19 @@ var SmashingSlideshow = (function () {
                 slide.setWidth(this.width + "px");
                 slide.setIndex(i);
                 this.rail.add(slide);
-                this.bulletRail.add(new SmashingBullet(i, this));
+                console.log(this.showBullets);
+                console.log(this.bulletsRail);
+                console.log(this.showBullets && this.bulletsRail);
+                console.groupEnd();
+                if (this.showBullets && this.bulletsRail !== undefined) {
+                    this.bulletsRail.add(new SmashingBullet(i, this));
+                }
             }
             else {
                 throw new TypeError("Trying to add a non-HTMLElement to SmashingSlideshow.");
             }
         }
         this.viewport.getNode().appendChild(this.rail.getNode());
-        this.node.appendChild(this.viewport.getNode());
-        var left_arrow = new SmashingArrow("left", this);
-        var right_arrow = new SmashingArrow("right", this);
-        this.arrows.push(left_arrow, right_arrow);
         this.activeSlide = this.getSlides()[0];
     }
     SmashingSlideshow.prototype.getNode = function () {
@@ -287,6 +295,84 @@ var SmashingSlideshow = (function () {
                 }, 500);
             }, 500);
         }
+    };
+    SmashingSlideshow.prototype.computeConfiguration = function (user_configuration) {
+        var smashing_configuration = {
+            wrapper: user_configuration.wrapper,
+            width: 0,
+            elements: [],
+            rail: new SmashingRail(),
+            viewport: new SmashingViewport(undefined),
+            showBullets: false,
+            bulletsRail: undefined,
+            showArrows: false,
+            arrows: undefined
+        };
+        if (user_configuration.width === undefined) {
+            var rect = smashing_configuration.wrapper.getBoundingClientRect();
+            smashing_configuration.width = rect.width;
+        }
+        else {
+            smashing_configuration.width = user_configuration.width;
+        }
+        if (user_configuration.elements === undefined) {
+            var elements = smashing_configuration.wrapper.querySelectorAll("[data-slide]");
+            smashing_configuration.elements = Array.from(elements);
+        }
+        else {
+            smashing_configuration.elements = user_configuration.elements;
+        }
+        if (user_configuration.rail !== undefined) {
+            smashing_configuration.rail = user_configuration.rail;
+        }
+        smashing_configuration.rail.setWidth(smashing_configuration.width * smashing_configuration.elements.length + "px");
+        if (user_configuration.viewport === undefined) {
+            var viewport = document.createElement("smashing-viewport");
+            smashing_configuration.wrapper.appendChild(viewport);
+            smashing_configuration.viewport = new SmashingViewport(viewport);
+        }
+        else {
+            smashing_configuration.viewport = new SmashingViewport(user_configuration.viewport);
+        }
+        if (user_configuration.showBullets === true) {
+            smashing_configuration.showBullets = true;
+            if (user_configuration.bulletsRail === undefined) {
+                smashing_configuration.bulletsRail = new SmashingBulletsRail(undefined);
+                smashing_configuration.wrapper.appendChild(smashing_configuration.bulletsRail.getNode());
+            }
+            else {
+                smashing_configuration.bulletsRail = new SmashingBulletsRail(user_configuration.bulletsRail);
+            }
+        }
+        if (user_configuration.showArrows === true) {
+            smashing_configuration.showArrows = user_configuration.showArrows;
+            smashing_configuration.arrows = [];
+            var node = void 0;
+            if (user_configuration.leftArrow === undefined) {
+                node = document.createElement("button");
+            }
+            else {
+                node = user_configuration.leftArrow;
+            }
+            smashing_configuration.arrows.push(new SmashingArrow({
+                node: node,
+                orientation: "left",
+                slideshow: this
+            }));
+            if (user_configuration.rightArrow === undefined) {
+                node = document.createElement("button");
+                smashing_configuration.wrapper.appendChild(node);
+            }
+            else {
+                node = user_configuration.rightArrow;
+            }
+            smashing_configuration.arrows.push(new SmashingArrow({
+                node: node,
+                orientation: "right",
+                slideshow: this
+            }));
+        }
+        return smashing_configuration;
     };
     return SmashingSlideshow;
 }());

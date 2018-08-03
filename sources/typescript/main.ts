@@ -1,34 +1,61 @@
 "use strict";
 
-function makeUndraggable(node: HTMLElement)
-{
-    Array.prototype.forEach.call(
-        node.children,
-        (child: HTMLElement) =>
-        {
-            child.setAttribute("draggable", "false");
-
-            if (child.children)
-            {
-                makeUndraggable(child);
-            }
-        }
-    );
-}
-
 function isNumeric(n: any): boolean
 {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-class SmashingBulletRail
+interface UserConfiguration
+{
+    wrapper: HTMLElement;
+    width: number | undefined;
+    elements: Array<Element> | undefined;
+    rail: SmashingRail | undefined;
+    viewport: HTMLElement | undefined;
+    showBullets: boolean | undefined;
+    bulletsRail: HTMLElement | undefined;
+    showArrows: boolean | undefined;
+    leftArrow: HTMLButtonElement | undefined;
+    rightArrow: HTMLButtonElement | undefined;
+}
+
+interface SmashingConfiguration
+{
+    wrapper: HTMLElement;
+    width: number;
+    elements: Array<Element>;
+    rail: SmashingRail;
+    viewport: SmashingViewport;
+    showBullets: boolean;
+    bulletsRail: SmashingBulletsRail | undefined;
+    showArrows: boolean;
+    arrows: Array<SmashingArrow> | undefined;
+}
+
+interface ArrowConfiguration
+{
+    node: HTMLButtonElement;
+    orientation: string;
+    slideshow: SmashingSlideshow;
+}
+
+class SmashingBulletsRail
 {
     private node: HTMLElement;
     private bullets: Array<SmashingBullet> = [];
 
-    constructor()
+    constructor(node: HTMLElement | undefined)
     {
-        this.node = document.createElement("nav");
+
+        if (node === undefined)
+        {
+            this.node = document.createElement("nav");
+        }
+        else
+        {
+            this.node = node;
+        }
+
     }
 
     /**
@@ -95,26 +122,33 @@ class SmashingArrow
     private orientation: string;
     private slideshow: SmashingSlideshow;
     
-    constructor(orientation: string, slideshow: SmashingSlideshow)
+    constructor(configuration: ArrowConfiguration)
     {
-        if (["left", "right"].indexOf(orientation) === -1)
+
+        if (["left", "right"].indexOf(configuration.orientation) === -1)
         {
             throw new SyntaxError(`Arrow orientation must be either "left" or "right".`);
         }
 
-        this.slideshow = slideshow;
+        this.slideshow = configuration.slideshow;
 
-        this.node = document.createElement("button");
-        this.orientation = orientation;
+        if (configuration.node === undefined || configuration.node === null)
+        {
+            this.node = document.createElement("button");
+            this.slideshow.getNode().appendChild(this.node);
+        }
+        else
+        {
+            this.node = configuration.node;
+        }
+
+        this.orientation = configuration.orientation;
         this.node.classList.add("smashing-arrow", this.orientation);
-
-        this.slideshow.getNode().appendChild(this.node);
 
         this.node.addEventListener(
             "click",
             (): void =>
             {
-                console.log(this.slideshow);
                 if (this.orientation === "left")
                 {
                     this.slideshow.goTo(this.slideshow.getActiveSlide().getIndex() - 1);
@@ -386,9 +420,16 @@ class SmashingViewport
 {
     private node: HTMLElement;
 
-    constructor()
+    constructor(node: HTMLElement | undefined)
     {
-        this.node = document.createElement("smashing-viewport");
+        if (node === undefined)
+        {
+            this.node = document.createElement("smashing-viewport");
+        }
+        else
+        {
+            this.node = node;
+        }
     }
 
     /**
@@ -403,47 +444,34 @@ class SmashingViewport
 
 class SmashingSlideshow
 {
-
     private node: HTMLElement;
     private viewport: SmashingViewport;
     private width: number;
     private rail: SmashingRail;
     private elements: Array<Element>;
-    private arrows: Array<SmashingArrow> = [];
+    // private arrows: Array<SmashingArrow> | undefined;
     private activeSlide: SmashingSlide;
-    private bulletRail: SmashingBulletRail;
+    private showBullets: boolean;
+    private bulletsRail: SmashingBulletsRail | undefined;
 
-    constructor(root: HTMLElement)
+    constructor(user_configuration: UserConfiguration)
     {
-        /* Initializing root */
 
-        this.node = root;
+        const configuration: SmashingConfiguration = this.computeConfiguration(user_configuration);
 
-        let rect: ClientRect = root.getBoundingClientRect();
+        console.group("constructor");
 
-        this.width = rect.width;
+        console.log(user_configuration);
+        console.log(configuration);
 
-        /* Fetching elements */
-
-        let elements: HTMLCollection = this.node.children;
-
-        // makeUndraggable(root);
-
-        this.elements = Array.from(elements);
-
-        /* Initializing viewport */
-
-        this.viewport = new SmashingViewport();
-
-        /* Initializing rail */
-
-        this.rail = new SmashingRail();
-        this.rail.setWidth(`${this.width * this.elements.length}px`);
-
-        /* Initializing bullets */
-
-        this.bulletRail = new SmashingBulletRail();
-        this.node.appendChild(this.bulletRail.getNode());
+        this.node = configuration.wrapper;
+        this.viewport = configuration.viewport;
+        this.width = configuration.width;
+        this.rail = configuration.rail;
+        this.elements = configuration.elements;
+        // this.arrows = configuration.arrows;
+        this.showBullets = configuration.showBullets;
+        this.bulletsRail = configuration.bulletsRail;
 
         /* Initializing slides */
 
@@ -460,8 +488,16 @@ class SmashingSlideshow
                 slide.setIndex(i);
 
                 this.rail.add(slide);
-                this.bulletRail.add(new SmashingBullet(i, this));
-                
+
+                console.log(this.showBullets);
+                console.log(this.bulletsRail);
+                console.log(this.showBullets && this.bulletsRail);
+                console.groupEnd();
+
+                if (this.showBullets && this.bulletsRail !== undefined)
+                {
+                    this.bulletsRail.add(new SmashingBullet(i, this));
+                }
             }
             else
             {
@@ -470,15 +506,6 @@ class SmashingSlideshow
         }
 
         this.viewport.getNode().appendChild(this.rail.getNode());
-
-        this.node.appendChild(this.viewport.getNode());
-
-        /* Initializing arrows */
-
-        const left_arrow: SmashingArrow = new SmashingArrow("left", this);
-        const right_arrow: SmashingArrow = new SmashingArrow("right", this);
-        
-        this.arrows.push(left_arrow, right_arrow);
 
         this.activeSlide = this.getSlides()[0];
 
@@ -594,4 +621,144 @@ class SmashingSlideshow
         }
     }
 
+    /**
+     * computeConfiguration
+     */
+    public computeConfiguration(user_configuration: UserConfiguration): SmashingConfiguration
+    {
+
+        let smashing_configuration: SmashingConfiguration = {
+            wrapper: user_configuration.wrapper,
+            width: 0,
+            elements: [],
+            rail: new SmashingRail(),
+            viewport: new SmashingViewport(undefined),
+            showBullets: false,
+            bulletsRail: undefined,
+            showArrows: false,
+            arrows: undefined
+        };
+
+        // Handling this.width
+
+        if (user_configuration.width === undefined)
+        {
+            const rect: ClientRect = smashing_configuration.wrapper.getBoundingClientRect();
+            smashing_configuration.width = rect.width;
+        }
+        else
+        {
+            smashing_configuration.width = user_configuration.width;
+        }
+
+        // Handling this.elements
+
+        if (user_configuration.elements === undefined)
+        {
+            /* Fetching elements */
+
+            const elements: NodeListOf<HTMLElement> = smashing_configuration.wrapper.querySelectorAll("[data-slide]");
+
+            smashing_configuration.elements = Array.from(elements);
+        }
+        else
+        {
+            smashing_configuration.elements = user_configuration.elements;
+        }
+
+        // Handling this.rail
+
+        if (user_configuration.rail !== undefined)
+        {
+            /* Initializing rail */
+
+            smashing_configuration.rail = user_configuration.rail;
+        }
+        smashing_configuration.rail.setWidth(`${smashing_configuration.width * smashing_configuration.elements.length}px`);
+
+        // Handling this.viewport
+
+        if (user_configuration.viewport === undefined)
+        {
+            /* Initializing viewport */
+
+            let viewport: HTMLElement = document.createElement("smashing-viewport");
+            smashing_configuration.wrapper.appendChild(viewport);
+            smashing_configuration.viewport = new SmashingViewport(viewport);
+        }
+        else
+        {
+            smashing_configuration.viewport = new SmashingViewport(user_configuration.viewport);
+        }
+
+        if (user_configuration.showBullets === true)
+        {
+
+            smashing_configuration.showBullets = true;
+
+            if (user_configuration.bulletsRail === undefined)
+            {
+                /* Initializing bullets */
+    
+                smashing_configuration.bulletsRail = new SmashingBulletsRail(undefined);
+                smashing_configuration.wrapper.appendChild(smashing_configuration.bulletsRail.getNode());
+            }
+            else
+            {
+                smashing_configuration.bulletsRail = new SmashingBulletsRail(user_configuration.bulletsRail);
+            }
+        }
+
+        /* Initializing arrows */
+
+        if (user_configuration.showArrows === true)
+        {
+            smashing_configuration.showArrows = user_configuration.showArrows;
+            smashing_configuration.arrows = [];
+
+            let node: HTMLButtonElement;
+
+            if (user_configuration.leftArrow === undefined)
+            {
+                node = document.createElement("button");
+            }
+            else
+            {
+                node = user_configuration.leftArrow;
+            }
+
+            smashing_configuration.arrows.push(
+                new SmashingArrow(
+                    {
+                        node: node,
+                        orientation: "left",
+                        slideshow: this
+                    }
+                )
+            );
+
+            if (user_configuration.rightArrow === undefined)
+            {
+                node = document.createElement("button");
+                smashing_configuration.wrapper.appendChild(node);
+            }
+            else
+            {
+                node = user_configuration.rightArrow;
+            }
+
+            smashing_configuration.arrows.push(
+                new SmashingArrow(
+                    {
+                        node: node,
+                        orientation: "right",
+                        slideshow: this
+                    }
+                )
+            );
+
+        }
+
+        return smashing_configuration;
+    }
 }
