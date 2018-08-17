@@ -27,13 +27,12 @@ var SmashingBulletsRail = (function () {
 var SmashingBullet = (function () {
     function SmashingBullet(index, slideshow) {
         var _this = this;
-        this.transition = "slide";
         this.node = document.createElement("button");
         this.index = index;
         this.node.appendChild(document.createTextNode("" + (this.index + 1)));
         this.slideshow = slideshow;
         this.node.addEventListener("click", function () {
-            if (_this.transition === "slide") {
+            if (_this.slideshow.getAnimation() === "slide") {
                 _this.slideshow.goTo(_this.index);
             }
             else {
@@ -72,10 +71,20 @@ var SmashingArrow = (function () {
         this.node.classList.add("smashing-arrow", this.orientation);
         this.node.addEventListener("click", function () {
             if (_this.orientation === "left") {
-                _this.slideshow.goTo(_this.slideshow.getActiveSlide().getIndex() - 1);
+                if (_this.slideshow.getAnimation() === "slide") {
+                    _this.slideshow.goTo(_this.slideshow.getActiveSlide().getIndex() - 1);
+                }
+                else {
+                    _this.slideshow.fadeTo(_this.slideshow.getActiveSlide().getIndex() - 1);
+                }
             }
             else if (_this.orientation === "right") {
-                _this.slideshow.goTo(_this.slideshow.getActiveSlide().getIndex() + 1);
+                if (_this.slideshow.getAnimation() === "slide") {
+                    _this.slideshow.goTo(_this.slideshow.getActiveSlide().getIndex() + 1);
+                }
+                else {
+                    _this.slideshow.fadeTo(_this.slideshow.getActiveSlide().getIndex() + 1);
+                }
             }
         });
     }
@@ -90,10 +99,12 @@ var SmashingSlide = (function () {
         this.content = content;
         this.node.appendChild(content);
         this.slideshow = slideshow;
-        this.node.addEventListener("mousedown", this.dragStart.bind(this), true);
-        this.node.addEventListener("mousemove", this.drag.bind(this), true);
-        this.node.addEventListener("mouseup", this.dragEnd.bind(this), true);
-        this.node.addEventListener("mouseleave", this.dragEnd.bind(this), true);
+        if (this.slideshow.getAnimation() === "slide") {
+            this.node.addEventListener("mousedown", this.dragStart.bind(this), true);
+            this.node.addEventListener("mousemove", this.drag.bind(this), true);
+            this.node.addEventListener("mouseup", this.dragEnd.bind(this), true);
+            this.node.addEventListener("mouseleave", this.dragEnd.bind(this), true);
+        }
     }
     SmashingSlide.prototype.dragStart = function (event) {
         this.dragged = true;
@@ -225,14 +236,19 @@ var SmashingViewport = (function () {
 }());
 var SmashingSlideshow = (function () {
     function SmashingSlideshow(user_configuration) {
+        this.transitioning = false;
         var configuration = this.computeConfiguration(user_configuration);
         this.node = configuration.wrapper;
         this.viewport = configuration.viewport;
         this.width = configuration.width;
         this.rail = configuration.rail;
         this.elements = configuration.elements;
+        this.animation = configuration.animation;
         this.showBullets = configuration.showBullets;
         this.bulletsRail = configuration.bulletsRail;
+        if (this.animation === "fade") {
+            this.rail.setSlideTime("0s, 0.25s");
+        }
         for (var i = 0; i < this.elements.length; ++i) {
             var element = this.elements[i];
             if (element instanceof HTMLElement) {
@@ -260,6 +276,9 @@ var SmashingSlideshow = (function () {
     SmashingSlideshow.prototype.getElements = function () {
         return this.elements;
     };
+    SmashingSlideshow.prototype.getAnimation = function () {
+        return this.animation;
+    };
     SmashingSlideshow.prototype.getActiveSlide = function () {
         return this.activeSlide;
     };
@@ -279,6 +298,7 @@ var SmashingSlideshow = (function () {
         return this.rail.remove(slide);
     };
     SmashingSlideshow.prototype.goTo = function (index) {
+        var _this = this;
         if (index < 0) {
             index = this.elements.length - 1;
         }
@@ -286,13 +306,17 @@ var SmashingSlideshow = (function () {
             index = index - this.elements.length;
             this.goTo(index);
         }
-        else {
+        else if (this.transitioning === false || this.animation === "slide") {
+            this.transitioning = true;
             this.rail.getNode().style.left = "-" + (index) * this.width + "px";
             this.activeSlide = this.getSlides()[index];
             if (this.showBullets && this.bulletsRail !== undefined) {
                 var BULLETS = this.bulletsRail.getBullets();
                 BULLETS[index].setActive();
             }
+            setTimeout(function () {
+                _this.transitioning = false;
+            }, 500);
         }
     };
     SmashingSlideshow.prototype.fadeTo = function (index) {
@@ -301,14 +325,18 @@ var SmashingSlideshow = (function () {
             index = index - this.elements.length;
             this.fadeTo(index);
         }
-        else {
+        else if (this.transitioning === false) {
             this.rail.setOpacity(0);
-            this.rail.setSlideTime("0s, 0.25s");
+            if (this.animation === "slide") {
+                this.rail.setSlideTime("0s, 0.25s");
+            }
             setTimeout(function () {
                 _this.goTo(index);
                 _this.rail.setOpacity(1);
                 setTimeout(function () {
-                    _this.rail.setSlideTime("0.5s, 0.25s");
+                    if (_this.animation === "slide") {
+                        _this.rail.setSlideTime("0.5s, 0.25s");
+                    }
                 }, 500);
             }, 500);
         }
@@ -318,6 +346,7 @@ var SmashingSlideshow = (function () {
             wrapper: user_configuration.wrapper,
             width: 0,
             elements: [],
+            animation: "",
             rail: new SmashingRail(),
             viewport: new SmashingViewport(undefined),
             showBullets: false,
@@ -338,6 +367,15 @@ var SmashingSlideshow = (function () {
         }
         else {
             smashing_configuration.elements = user_configuration.elements;
+        }
+        if (user_configuration.animation === undefined) {
+            smashing_configuration.animation = "slide";
+        }
+        else if (typeof user_configuration.animation === "string" && ["slide", "fade"].indexOf(user_configuration.animation) !== -1) {
+            smashing_configuration.animation = user_configuration.animation;
+        }
+        else {
+            throw new TypeError("animation property must be string and have a value of \"fade\" or \"slide\".");
         }
         if (user_configuration.rail !== undefined) {
             smashing_configuration.rail = user_configuration.rail;

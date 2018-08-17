@@ -16,6 +16,7 @@ window.addEventListener(
                     wrapper: root,
                     width: undefined,
                     elements: undefined,
+                    animation: "fade",
                     rail: undefined,
                     viewport: undefined,
                     showBullets: true,

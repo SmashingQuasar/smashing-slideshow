@@ -7,6 +7,7 @@ window.addEventListener("load", function () {
             wrapper: root,
             width: undefined,
             elements: undefined,
+            animation: "fade",
             rail: undefined,
             viewport: undefined,
             showBullets: true,

@@ -10,6 +10,7 @@ interface UserConfiguration
     wrapper: HTMLElement;
     width: number | undefined;
     elements: Array<Element> | undefined;
+    animation: string | undefined;
     rail: SmashingRail | undefined;
     viewport: HTMLElement | undefined;
     showBullets: boolean | undefined;
@@ -24,6 +25,7 @@ interface SmashingConfiguration
     wrapper: HTMLElement;
     width: number;
     elements: Array<Element>;
+    animation: string;
     rail: SmashingRail;
     viewport: SmashingViewport;
     showBullets: boolean;
@@ -90,7 +92,6 @@ class SmashingBullet
     private node: HTMLButtonElement;
     private index: number;
     private slideshow: SmashingSlideshow;
-    private transition: string = "slide";
 
     constructor(index: number, slideshow: SmashingSlideshow)
     {
@@ -103,7 +104,7 @@ class SmashingBullet
             "click",
             () =>
             {
-                if (this.transition === "slide")
+                if (this.slideshow.getAnimation() === "slide")
                 {
                     this.slideshow.goTo(this.index);
                 }
@@ -179,11 +180,25 @@ class SmashingArrow
             {
                 if (this.orientation === "left")
                 {
-                    this.slideshow.goTo(this.slideshow.getActiveSlide().getIndex() - 1);
+                    if (this.slideshow.getAnimation() === "slide")
+                    {
+                        this.slideshow.goTo(this.slideshow.getActiveSlide().getIndex() - 1);
+                    }
+                    else
+                    {
+                        this.slideshow.fadeTo(this.slideshow.getActiveSlide().getIndex() - 1);
+                    }
                 }
                 else if (this.orientation === "right")
                 {
-                    this.slideshow.goTo(this.slideshow.getActiveSlide().getIndex() + 1);
+                    if (this.slideshow.getAnimation() === "slide")
+                    {
+                        this.slideshow.goTo(this.slideshow.getActiveSlide().getIndex() + 1);
+                    }
+                    else
+                    {
+                        this.slideshow.fadeTo(this.slideshow.getActiveSlide().getIndex() + 1);
+                    }
                 }
             }  
         );
@@ -207,10 +222,13 @@ class SmashingSlide
 
         this.slideshow = slideshow;
 
-        this.node.addEventListener("mousedown", this.dragStart.bind(this), true);
-        this.node.addEventListener("mousemove", this.drag.bind(this), true);
-        this.node.addEventListener("mouseup", this.dragEnd.bind(this), true);
-        this.node.addEventListener("mouseleave", this.dragEnd.bind(this), true);
+        if (this.slideshow.getAnimation() === "slide")
+        {
+            this.node.addEventListener("mousedown", this.dragStart.bind(this), true);
+            this.node.addEventListener("mousemove", this.drag.bind(this), true);
+            this.node.addEventListener("mouseup", this.dragEnd.bind(this), true);
+            this.node.addEventListener("mouseleave", this.dragEnd.bind(this), true);
+        }
 
     }
 
@@ -477,9 +495,11 @@ class SmashingSlideshow
     private width: number;
     private rail: SmashingRail;
     private elements: Array<Element>;
+    private animation: string;
     private activeSlide: SmashingSlide;
     private showBullets: boolean;
     private bulletsRail: SmashingBulletsRail | undefined;
+    private transitioning: boolean = false;
 
     constructor(user_configuration: UserConfiguration)
     {
@@ -491,8 +511,15 @@ class SmashingSlideshow
         this.width = configuration.width;
         this.rail = configuration.rail;
         this.elements = configuration.elements;
+        this.animation = configuration.animation;
         this.showBullets = configuration.showBullets;
         this.bulletsRail = configuration.bulletsRail;
+        
+
+        if (this.animation === "fade")
+        {
+            this.rail.setSlideTime("0s, 0.25s");
+        }
 
         /* Initializing slides */
 
@@ -546,6 +573,14 @@ class SmashingSlideshow
     public getElements(): Array<Element>
     {
         return this.elements;
+    }
+
+    /**
+     * getAnimation
+     */
+    public getAnimation(): string
+    {
+        return this.animation;    
     }
 
     /**
@@ -610,8 +645,11 @@ class SmashingSlideshow
 
             this.goTo(index);
         }
-        else
+        else if (this.transitioning === false || this.animation === "slide")
         {
+
+            this.transitioning = true;
+
             this.rail.getNode().style.left = `-${(index) * this.width}px`;  
             this.activeSlide = this.getSlides()[index]; 
             
@@ -620,6 +658,14 @@ class SmashingSlideshow
                 const BULLETS: Array<SmashingBullet> = this.bulletsRail.getBullets();
                 BULLETS[index].setActive();
             }
+
+            setTimeout(
+                () =>
+                {
+                    this.transitioning = false;
+                },
+                500
+            );
 
         }
     }
@@ -635,11 +681,14 @@ class SmashingSlideshow
 
             this.fadeTo(index);
         }
-        else
+        else if (this.transitioning === false)
         {
             this.rail.setOpacity(0);
 
-            this.rail.setSlideTime("0s, 0.25s");
+            if (this.animation === "slide")
+            {
+                this.rail.setSlideTime("0s, 0.25s");
+            }
 
             setTimeout(
                 () =>
@@ -649,7 +698,12 @@ class SmashingSlideshow
                     setTimeout(
                         () =>
                         {
-                            this.rail.setSlideTime("0.5s, 0.25s");
+
+                            if (this.animation === "slide")
+                            {
+                                this.rail.setSlideTime("0.5s, 0.25s");
+                            }
+
                         },
                         500
                     );
@@ -671,6 +725,7 @@ class SmashingSlideshow
             wrapper: user_configuration.wrapper,
             width: 0,
             elements: [],
+            animation: "",
             rail: new SmashingRail(),
             viewport: new SmashingViewport(undefined),
             showBullets: false,
@@ -704,6 +759,21 @@ class SmashingSlideshow
         else
         {
             smashing_configuration.elements = user_configuration.elements;
+        }
+
+        // Handling this.animation
+
+        if (user_configuration.animation === undefined)
+        {
+            smashing_configuration.animation = "slide";
+        }
+        else if (typeof user_configuration.animation === "string" && ["slide", "fade"].indexOf(user_configuration.animation) !== -1)
+        {
+            smashing_configuration.animation = user_configuration.animation;
+        }
+        else
+        {
+            throw new TypeError(`animation property must be string and have a value of "fade" or "slide".`);
         }
 
         // Handling this.rail
