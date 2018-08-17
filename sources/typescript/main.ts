@@ -75,6 +75,14 @@ class SmashingBulletsRail
         this.node.appendChild(bullet.getNode());
     }
 
+    /**
+     * getBullets
+     */
+    public getBullets(): Array<SmashingBullet>
+    {
+        return this.bullets;
+    }
+
 }
 
 class SmashingBullet
@@ -113,6 +121,26 @@ class SmashingBullet
     public getNode(): HTMLButtonElement
     {
         return this.node;
+    }
+
+    /**
+     * setActive
+     */
+    public setActive(): void
+    {
+
+        const BULLETS_RAIL: SmashingBulletsRail = this.slideshow.getBulletsRail();
+
+        const BULLETS: Array<SmashingBullet> = BULLETS_RAIL.getBullets();
+
+        BULLETS.forEach(
+            (bullet: SmashingBullet): void =>
+            {
+                bullet.getNode().classList.remove("active");
+            }
+        );
+
+        this.node.classList.add("active");    
     }
 }
 
@@ -449,7 +477,6 @@ class SmashingSlideshow
     private width: number;
     private rail: SmashingRail;
     private elements: Array<Element>;
-    // private arrows: Array<SmashingArrow> | undefined;
     private activeSlide: SmashingSlide;
     private showBullets: boolean;
     private bulletsRail: SmashingBulletsRail | undefined;
@@ -459,17 +486,11 @@ class SmashingSlideshow
 
         const configuration: SmashingConfiguration = this.computeConfiguration(user_configuration);
 
-        console.group("constructor");
-
-        console.log(user_configuration);
-        console.log(configuration);
-
         this.node = configuration.wrapper;
         this.viewport = configuration.viewport;
         this.width = configuration.width;
         this.rail = configuration.rail;
         this.elements = configuration.elements;
-        // this.arrows = configuration.arrows;
         this.showBullets = configuration.showBullets;
         this.bulletsRail = configuration.bulletsRail;
 
@@ -489,11 +510,6 @@ class SmashingSlideshow
 
                 this.rail.add(slide);
 
-                console.log(this.showBullets);
-                console.log(this.bulletsRail);
-                console.log(this.showBullets && this.bulletsRail);
-                console.groupEnd();
-
                 if (this.showBullets && this.bulletsRail !== undefined)
                 {
                     this.bulletsRail.add(new SmashingBullet(i, this));
@@ -509,6 +525,10 @@ class SmashingSlideshow
 
         this.activeSlide = this.getSlides()[0];
 
+        if (this.showBullets && this.bulletsRail !== undefined)
+        {
+            this.bulletsRail.getBullets()[0].setActive();
+        }
 
     }
 
@@ -545,6 +565,19 @@ class SmashingSlideshow
     }
 
     /**
+     * getBulletsRail
+     */
+    public getBulletsRail(): SmashingBulletsRail
+    {
+        if (this.bulletsRail === undefined)
+        {
+            throw new ReferenceError('Impossible to get slideshow.bulletsRail as it doesn\'t exist.');
+        }
+        return this.bulletsRail;    
+        
+    }
+
+    /**
      * getSlides
      */
     public getSlides(): Array<SmashingSlide>
@@ -568,7 +601,7 @@ class SmashingSlideshow
 
         if (index < 0)
         {
-            index = 0;
+            index = this.elements.length - 1;
         }
 
         if (index > (this.elements.length - 1))
@@ -580,7 +613,14 @@ class SmashingSlideshow
         else
         {
             this.rail.getNode().style.left = `-${(index) * this.width}px`;  
-            this.activeSlide = this.getSlides()[index];  
+            this.activeSlide = this.getSlides()[index]; 
+            
+            if (this.showBullets && this.bulletsRail !== undefined)
+            {
+                const BULLETS: Array<SmashingBullet> = this.bulletsRail.getBullets();
+                BULLETS[index].setActive();
+            }
+
         }
     }
 
@@ -721,6 +761,7 @@ class SmashingSlideshow
             if (user_configuration.leftArrow === undefined)
             {
                 node = document.createElement("button");
+                smashing_configuration.wrapper.appendChild(node);
             }
             else
             {

@@ -48,7 +48,11 @@ smashing-slideshow
             justify-content: center;
             align-items: center;
         }
-
+        button.active
+        {
+            background-color: white;
+            border: 1px solid blue;
+        }
     }
 
 }

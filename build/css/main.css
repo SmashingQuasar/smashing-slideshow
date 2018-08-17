@@ -64,4 +64,9 @@ smashing-slideshow nav button {
       -ms-flex-align: center;
           align-items: center;
 }
+
+smashing-slideshow nav button.active {
+  background-color: white;
+  border: 1px solid blue;
+}
 /*# sourceMappingURL=main.css.map */

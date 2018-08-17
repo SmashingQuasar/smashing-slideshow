@@ -52,4 +52,8 @@ smashing-slideshow nav button {
   color: white;
   font-weight: bold;
 }
+
+smashing-slideshow nav button.active {
+  color: blue;
+}
 /*# sourceMappingURL=demo.css.map */

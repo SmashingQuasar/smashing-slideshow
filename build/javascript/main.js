@@ -19,6 +19,9 @@ var SmashingBulletsRail = (function () {
         this.bullets.push(bullet);
         this.node.appendChild(bullet.getNode());
     };
+    SmashingBulletsRail.prototype.getBullets = function () {
+        return this.bullets;
+    };
     return SmashingBulletsRail;
 }());
 var SmashingBullet = (function () {
@@ -40,6 +43,14 @@ var SmashingBullet = (function () {
     }
     SmashingBullet.prototype.getNode = function () {
         return this.node;
+    };
+    SmashingBullet.prototype.setActive = function () {
+        var BULLETS_RAIL = this.slideshow.getBulletsRail();
+        var BULLETS = BULLETS_RAIL.getBullets();
+        BULLETS.forEach(function (bullet) {
+            bullet.getNode().classList.remove("active");
+        });
+        this.node.classList.add("active");
     };
     return SmashingBullet;
 }());
@@ -215,9 +226,6 @@ var SmashingViewport = (function () {
 var SmashingSlideshow = (function () {
     function SmashingSlideshow(user_configuration) {
         var configuration = this.computeConfiguration(user_configuration);
-        console.group("constructor");
-        console.log(user_configuration);
-        console.log(configuration);
         this.node = configuration.wrapper;
         this.viewport = configuration.viewport;
         this.width = configuration.width;
@@ -232,10 +240,6 @@ var SmashingSlideshow = (function () {
                 slide.setWidth(this.width + "px");
                 slide.setIndex(i);
                 this.rail.add(slide);
-                console.log(this.showBullets);
-                console.log(this.bulletsRail);
-                console.log(this.showBullets && this.bulletsRail);
-                console.groupEnd();
                 if (this.showBullets && this.bulletsRail !== undefined) {
                     this.bulletsRail.add(new SmashingBullet(i, this));
                 }
@@ -246,6 +250,9 @@ var SmashingSlideshow = (function () {
         }
         this.viewport.getNode().appendChild(this.rail.getNode());
         this.activeSlide = this.getSlides()[0];
+        if (this.showBullets && this.bulletsRail !== undefined) {
+            this.bulletsRail.getBullets()[0].setActive();
+        }
     }
     SmashingSlideshow.prototype.getNode = function () {
         return this.node;
@@ -259,6 +266,12 @@ var SmashingSlideshow = (function () {
     SmashingSlideshow.prototype.getRail = function () {
         return this.rail;
     };
+    SmashingSlideshow.prototype.getBulletsRail = function () {
+        if (this.bulletsRail === undefined) {
+            throw new ReferenceError('Impossible to get slideshow.bulletsRail as it doesn\'t exist.');
+        }
+        return this.bulletsRail;
+    };
     SmashingSlideshow.prototype.getSlides = function () {
         return this.rail.getSlides();
     };
@@ -267,7 +280,7 @@ var SmashingSlideshow = (function () {
     };
     SmashingSlideshow.prototype.goTo = function (index) {
         if (index < 0) {
-            index = 0;
+            index = this.elements.length - 1;
         }
         if (index > (this.elements.length - 1)) {
             index = index - this.elements.length;
@@ -276,6 +289,10 @@ var SmashingSlideshow = (function () {
         else {
             this.rail.getNode().style.left = "-" + (index) * this.width + "px";
             this.activeSlide = this.getSlides()[index];
+            if (this.showBullets && this.bulletsRail !== undefined) {
+                var BULLETS = this.bulletsRail.getBullets();
+                BULLETS[index].setActive();
+            }
         }
     };
     SmashingSlideshow.prototype.fadeTo = function (index) {
@@ -350,6 +367,7 @@ var SmashingSlideshow = (function () {
             var node = void 0;
             if (user_configuration.leftArrow === undefined) {
                 node = document.createElement("button");
+                smashing_configuration.wrapper.appendChild(node);
             }
             else {
                 node = user_configuration.leftArrow;
