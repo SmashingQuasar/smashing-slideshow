@@ -267,8 +267,6 @@ class SmashingSlide
             let width = parseFloat(`${this.getWidth()}`);
     
             let delta = (width / 4) - Math.abs(left);
-    
-
 
             if (delta < 0)
             {
@@ -521,32 +519,7 @@ class SmashingSlideshow
             this.rail.setSlideTime("0s, 0.25s");
         }
 
-        /* Initializing slides */
-
-        for (let i = 0; i < this.elements.length; ++i)
-        {
-            let element: Element = this.elements[i]
-
-            if (element instanceof HTMLElement) // Strict type check.
-            {
-                let slide: SmashingSlide = new SmashingSlide(element, this);
-
-                slide.setWidth(`${this.width}px`);
-
-                slide.setIndex(i);
-
-                this.rail.add(slide);
-
-                if (this.showBullets && this.bulletsRail !== undefined)
-                {
-                    this.bulletsRail.add(new SmashingBullet(i, this));
-                }
-            }
-            else
-            {
-                throw new TypeError("Trying to add a non-HTMLElement to SmashingSlideshow.");
-            }
-        }
+        this.initializeSlides();
 
         this.viewport.getNode().appendChild(this.rail.getNode());
 
@@ -618,6 +591,60 @@ class SmashingSlideshow
     public getSlides(): Array<SmashingSlide>
     {
         return this.rail.getSlides();    
+    }
+
+    private calculateWidth(): number
+    {
+        const RECT: ClientRect = this.node.getBoundingClientRect();
+
+        return RECT.width;
+    }
+
+    /**
+     * refresh
+     */
+    public refresh(): void
+    {
+        this.width = this.calculateWidth();
+
+        this.getSlides().forEach(
+            (slide: SmashingSlide): void =>
+            {
+                slide.setWidth(`${this.width}px`);
+            }
+        );
+    }
+
+    /**
+     * initializeSlides
+     */
+    public initializeSlides(): void
+    {
+
+        for (let i = 0; i < this.elements.length; ++i)
+        {
+            let element: Element = this.elements[i];
+
+            if (element instanceof HTMLElement) // Strict type check.
+            {
+                let slide: SmashingSlide = new SmashingSlide(element, this);
+
+                slide.setWidth(`${this.width}px`);
+
+                slide.setIndex(i);
+
+                this.rail.add(slide);
+
+                if (this.showBullets && this.bulletsRail !== undefined)
+                {
+                    this.bulletsRail.add(new SmashingBullet(i, this));
+                }
+            }
+            else
+            {
+                throw new TypeError("Trying to add a non-HTMLElement to SmashingSlideshow.");
+            }
+        }
     }
 
     /**

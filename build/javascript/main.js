@@ -249,21 +249,7 @@ var SmashingSlideshow = (function () {
         if (this.animation === "fade") {
             this.rail.setSlideTime("0s, 0.25s");
         }
-        for (var i = 0; i < this.elements.length; ++i) {
-            var element = this.elements[i];
-            if (element instanceof HTMLElement) {
-                var slide = new SmashingSlide(element, this);
-                slide.setWidth(this.width + "px");
-                slide.setIndex(i);
-                this.rail.add(slide);
-                if (this.showBullets && this.bulletsRail !== undefined) {
-                    this.bulletsRail.add(new SmashingBullet(i, this));
-                }
-            }
-            else {
-                throw new TypeError("Trying to add a non-HTMLElement to SmashingSlideshow.");
-            }
-        }
+        this.initializeSlides();
         this.viewport.getNode().appendChild(this.rail.getNode());
         this.activeSlide = this.getSlides()[0];
         if (this.showBullets && this.bulletsRail !== undefined) {
@@ -293,6 +279,34 @@ var SmashingSlideshow = (function () {
     };
     SmashingSlideshow.prototype.getSlides = function () {
         return this.rail.getSlides();
+    };
+    SmashingSlideshow.prototype.calculateWidth = function () {
+        var RECT = this.node.getBoundingClientRect();
+        return RECT.width;
+    };
+    SmashingSlideshow.prototype.refresh = function () {
+        var _this = this;
+        this.width = this.calculateWidth();
+        this.getSlides().forEach(function (slide) {
+            slide.setWidth(_this.width + "px");
+        });
+    };
+    SmashingSlideshow.prototype.initializeSlides = function () {
+        for (var i = 0; i < this.elements.length; ++i) {
+            var element = this.elements[i];
+            if (element instanceof HTMLElement) {
+                var slide = new SmashingSlide(element, this);
+                slide.setWidth(this.width + "px");
+                slide.setIndex(i);
+                this.rail.add(slide);
+                if (this.showBullets && this.bulletsRail !== undefined) {
+                    this.bulletsRail.add(new SmashingBullet(i, this));
+                }
+            }
+            else {
+                throw new TypeError("Trying to add a non-HTMLElement to SmashingSlideshow.");
+            }
+        }
     };
     SmashingSlideshow.prototype.remove = function (slide) {
         return this.rail.remove(slide);
