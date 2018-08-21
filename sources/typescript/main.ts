@@ -648,6 +648,10 @@ class SmashingSlideshow
         else if (this.transitioning === false || this.animation === "slide")
         {
 
+            const BEFORE_CHANGE_EVENT = new CustomEvent("SSBeforeChange", { detail: this });
+
+            this.node.dispatchEvent(BEFORE_CHANGE_EVENT);
+
             this.transitioning = true;
 
             this.rail.getNode().style.left = `-${(index) * this.width}px`;  
@@ -663,6 +667,11 @@ class SmashingSlideshow
                 () =>
                 {
                     this.transitioning = false;
+                            
+                    const AFTER_CHANGE_EVENT = new CustomEvent("SSAfterChange", { detail: this });
+
+                    this.node.dispatchEvent(AFTER_CHANGE_EVENT);
+
                 },
                 500
             );

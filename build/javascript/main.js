@@ -307,6 +307,8 @@ var SmashingSlideshow = (function () {
             this.goTo(index);
         }
         else if (this.transitioning === false || this.animation === "slide") {
+            var BEFORE_CHANGE_EVENT = new CustomEvent("SSBeforeChange", { detail: this });
+            this.node.dispatchEvent(BEFORE_CHANGE_EVENT);
             this.transitioning = true;
             this.rail.getNode().style.left = "-" + (index) * this.width + "px";
             this.activeSlide = this.getSlides()[index];
@@ -316,6 +318,8 @@ var SmashingSlideshow = (function () {
             }
             setTimeout(function () {
                 _this.transitioning = false;
+                var AFTER_CHANGE_EVENT = new CustomEvent("SSAfterChange", { detail: _this });
+                _this.node.dispatchEvent(AFTER_CHANGE_EVENT);
             }, 500);
         }
     };
