@@ -1,8 +1,10 @@
 smashing-slideshow {
+  display: block;
   position: relative;
 }
 
 smashing-slideshow smashing-viewport {
+  display: block;
   position: relative;
   overflow: hidden;
   height: 100%;
@@ -24,6 +26,7 @@ smashing-slideshow smashing-rail {
 }
 
 smashing-slideshow smashing-slide {
+  display: block;
   height: 100%;
   display: -webkit-box;
   display: -ms-flexbox;
@@ -34,6 +37,8 @@ smashing-slideshow smashing-slide {
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
+  -ms-flex-negative: 0;
+      flex-shrink: 0;
 }
 
 smashing-slideshow nav {

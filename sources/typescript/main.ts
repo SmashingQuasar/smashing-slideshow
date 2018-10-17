@@ -613,6 +613,9 @@ class SmashingSlideshow
                 slide.setWidth(`${this.width}px`);
             }
         );
+
+        this.goTo(this.getActiveSlide().getIndex());
+
     }
 
     /**

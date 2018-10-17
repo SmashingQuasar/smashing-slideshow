@@ -26,6 +26,14 @@ window.addEventListener(
                     rightArrow: undefined
                 }
             );
+
+            window.addEventListener(
+                "resize",
+                () => {
+                    slideshow.refresh();
+                }
+            );
+
         }
         else
         {

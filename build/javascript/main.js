@@ -290,6 +290,7 @@ var SmashingSlideshow = (function () {
         this.getSlides().forEach(function (slide) {
             slide.setWidth(_this.width + "px");
         });
+        this.goTo(this.getActiveSlide().getIndex());
     };
     SmashingSlideshow.prototype.initializeSlides = function () {
         for (var i = 0; i < this.elements.length; ++i) {

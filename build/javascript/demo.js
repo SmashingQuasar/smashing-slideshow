@@ -16,6 +16,9 @@ window.addEventListener("load", function () {
             leftArrow: undefined,
             rightArrow: undefined
         });
+        window.addEventListener("resize", function () {
+            slideshow.refresh();
+        });
     }
     else {
         throw new ReferenceError("Unable to retrieve root node for SmashingSlideshow");
