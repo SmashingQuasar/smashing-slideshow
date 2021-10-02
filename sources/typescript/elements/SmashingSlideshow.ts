@@ -115,7 +115,7 @@ class SmashingSlideshow
 
     private calculateWidth(): number
     {
-        const RECT: ClientRect = this.node.getBoundingClientRect();
+        const RECT: DOMRect = this.node.getBoundingClientRect();
 
         return RECT.width;
     }
@@ -289,7 +289,7 @@ class SmashingSlideshow
 
         if (user_configuration.width === undefined)
         {
-            const rect: ClientRect = smashing_configuration.wrapper.getBoundingClientRect();
+            const rect: DOMRect = smashing_configuration.wrapper.getBoundingClientRect();
             smashing_configuration.width = rect.width;
         }
         else

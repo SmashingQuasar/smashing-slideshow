@@ -1,26 +1,18 @@
 "use strict";
-var slideshow;
-window.addEventListener("load", function () {
-    var root = document.querySelector("smashing-slideshow");
-    if (root) {
-        slideshow = new SmashingSlideshow({
-            wrapper: root,
-            width: undefined,
-            elements: undefined,
-            animation: "fade",
-            rail: undefined,
-            viewport: undefined,
-            showBullets: true,
-            bulletsRail: undefined,
-            showArrows: true,
-            leftArrow: undefined,
-            rightArrow: undefined
-        });
-        window.addEventListener("resize", function () {
-            slideshow.refresh();
-        });
-    }
-    else {
-        throw new ReferenceError("Unable to retrieve root node for SmashingSlideshow");
-    }
-});
+Object.defineProperty(exports, "__esModule", { value: true });
+var SmashingSlideshow_js_1 = require("./elements/SmashingSlideshow.js");
+var ROOT = document.querySelector("smashing-slideshow");
+if (ROOT instanceof HTMLElement) {
+    var SLIDESHOW_1 = new SmashingSlideshow_js_1.SmashingSlideshow({
+        wrapper: ROOT,
+        animation: "fade",
+        showBullets: true,
+        showArrows: true
+    });
+    window.addEventListener("resize", function () {
+        SLIDESHOW_1.refresh();
+    });
+}
+else {
+    throw new ReferenceError("Unable to retrieve root node for SmashingSlideshow");
+}
