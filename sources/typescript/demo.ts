@@ -1,45 +1,26 @@
-"use strict";
+import { SmashingSlideshow } from "./elements/SmashingSlideshow.js";
+import { Animation } from "./types/Animation.js";
 
-let slideshow: SmashingSlideshow;
+const ROOT: HTMLElement|null = document.querySelector("smashing-slideshow");
 
-window.addEventListener(
-    "load",
-    (): void =>
-    {
-        let root: HTMLElement | null = document.querySelector("smashing-slideshow");
+if (ROOT instanceof HTMLElement)
+{
+	const SLIDESHOW: SmashingSlideshow = new SmashingSlideshow({
+		wrapper: ROOT,
+		animation: Animation.fade,
+		showBullets: true,
+		showArrows: true
+	});
 
-        if (root)
-        {
-            
-            slideshow = new SmashingSlideshow(
-                {
-                    wrapper: root,
-                    width: undefined,
-                    elements: undefined,
-                    animation: "fade",
-                    rail: undefined,
-                    viewport: undefined,
-                    showBullets: true,
-                    bulletsRail: undefined,
-                    showArrows: true,
-                    leftArrow: undefined,
-                    rightArrow: undefined
-                }
-            );
-
-            window.addEventListener(
-                "resize",
-                () => {
-                    slideshow.refresh();
-                }
-            );
-
-        }
-        else
-        {
-            throw new ReferenceError("Unable to retrieve root node for SmashingSlideshow");
-        }
-
-    }
-);
-
+	window.addEventListener(
+		"resize",
+		(): void =>
+		{
+			SLIDESHOW.refresh();
+		}
+	);
+}
+else
+{
+	throw new ReferenceError("Unable to retrieve root node for SmashingSlideshow");
+}
