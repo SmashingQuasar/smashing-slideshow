@@ -1,36 +1,34 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SmashingRail = void 0;
-var SmashingSlide_js_1 = require("./SmashingSlide.js");
-var SmashingRail = (function () {
-    function SmashingRail() {
-        this.slides = [];
+import { SmashingSlide } from "./SmashingSlide.js";
+class SmashingRail {
+    node;
+    slides = [];
+    constructor() {
         this.node = document.createElement("smashing-rail");
     }
-    SmashingRail.prototype.getNode = function () {
+    getNode() {
         return this.node;
-    };
-    SmashingRail.prototype.setWidth = function (width) {
+    }
+    setWidth(width) {
         this.node.style.width = width;
-    };
-    SmashingRail.prototype.setOpacity = function (opacity) {
-        this.node.style.opacity = "" + opacity;
-    };
-    SmashingRail.prototype.setSlideTime = function (time) {
-        this.node.style.transitionDuration = "" + time;
-    };
-    SmashingRail.prototype.add = function (slide) {
+    }
+    setOpacity(opacity) {
+        this.node.style.opacity = `${opacity}`;
+    }
+    setSlideTime(time) {
+        this.node.style.transitionDuration = `${time}`;
+    }
+    add(slide) {
         this.slides.push(slide);
         this.node.appendChild(slide.getNode());
-    };
-    SmashingRail.prototype.find = function (slide) {
-        return this.slides.findIndex(function (element) {
+    }
+    find(slide) {
+        return this.slides.findIndex((element) => {
             return element.getNode() === slide.getNode();
         });
-    };
-    SmashingRail.prototype.remove = function (slide) {
-        var index;
-        if (slide instanceof SmashingSlide_js_1.SmashingSlide) {
+    }
+    remove(slide) {
+        let index;
+        if (slide instanceof SmashingSlide) {
             index = this.find(slide);
             if (index === -1) {
                 return false;
@@ -45,10 +43,9 @@ var SmashingRail = (function () {
         this.slides[index].getNode().remove();
         this.slides.splice(index, 1);
         return true;
-    };
-    SmashingRail.prototype.getSlides = function () {
+    }
+    getSlides() {
         return this.slides;
-    };
-    return SmashingRail;
-}());
-exports.SmashingRail = SmashingRail;
+    }
+}
+export { SmashingRail };

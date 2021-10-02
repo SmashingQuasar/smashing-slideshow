@@ -1,9 +1,10 @@
 {
     "compilerOptions": {
         "outDir": "./build/javascript",
-        "allowJs": true,
-        "target": "es5",
-        "lib": ["dom", "es2015"],
+        "allowJs": false,
+        "checkJs": false,
+        "target": "esnext",
+        "lib": ["dom", "esnext"],
         "alwaysStrict": true,
         "removeComments": true,
         "strict": true,
@@ -15,7 +16,6 @@
         "strictFunctionTypes": true,
         "allowUnusedLabels": false,
         "allowUnreachableCode": false,
-        "checkJs": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "newLine": "LF"

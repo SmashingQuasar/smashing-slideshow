@@ -1,8 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SmashingViewport = void 0;
-var SmashingViewport = (function () {
-    function SmashingViewport(node) {
+class SmashingViewport {
+    node;
+    constructor(node) {
         if (node === undefined) {
             this.node = document.createElement("smashing-viewport");
         }
@@ -10,9 +8,8 @@ var SmashingViewport = (function () {
             this.node = node;
         }
     }
-    SmashingViewport.prototype.getNode = function () {
+    getNode() {
         return this.node;
-    };
-    return SmashingViewport;
-}());
-exports.SmashingViewport = SmashingViewport;
+    }
+}
+export { SmashingViewport };

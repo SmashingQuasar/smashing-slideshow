@@ -1,33 +1,31 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SmashingBullet = void 0;
-var SmashingBullet = (function () {
-    function SmashingBullet(index, slideshow) {
-        var _this = this;
+class SmashingBullet {
+    node;
+    index;
+    slideshow;
+    constructor(index, slideshow) {
         this.node = document.createElement("button");
         this.index = index;
-        this.node.appendChild(document.createTextNode("" + (this.index + 1)));
+        this.node.appendChild(document.createTextNode(`${this.index + 1}`));
         this.slideshow = slideshow;
-        this.node.addEventListener("click", function () {
-            if (_this.slideshow.getAnimation() === "slide") {
-                _this.slideshow.goTo(_this.index);
+        this.node.addEventListener("click", () => {
+            if (this.slideshow.getAnimation() === "slide") {
+                this.slideshow.goTo(this.index);
             }
             else {
-                _this.slideshow.fadeTo(_this.index);
+                this.slideshow.fadeTo(this.index);
             }
         });
     }
-    SmashingBullet.prototype.getNode = function () {
+    getNode() {
         return this.node;
-    };
-    SmashingBullet.prototype.setActive = function () {
-        var BULLETS_RAIL = this.slideshow.getBulletsRail();
-        var BULLETS = BULLETS_RAIL.getBullets();
-        BULLETS.forEach(function (bullet) {
+    }
+    setActive() {
+        const BULLETS_RAIL = this.slideshow.getBulletsRail();
+        const BULLETS = BULLETS_RAIL.getBullets();
+        BULLETS.forEach((bullet) => {
             bullet.getNode().classList.remove("active");
         });
         this.node.classList.add("active");
-    };
-    return SmashingBullet;
-}());
-exports.SmashingBullet = SmashingBullet;
+    }
+}
+export { SmashingBullet };
